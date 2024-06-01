@@ -6,7 +6,7 @@ use image::GenericImageView;
 fn main() -> Result<(), Box<dyn Error>> {
     let mut image_path: Option<String> = None;
     let mut grid_size: (u32, u32) = (12, 12);
-    let mut title: String = String::from("Dotted SVG");
+    let mut title: String = String::from("default");
 
     for arg in env::args() {
         dbg!(&arg);
@@ -20,8 +20,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 (grid_val.next().unwrap().parse()?,
                  grid_val.next().unwrap().parse()?);
         }
-        if arg.starts_with("--title=") {
-            title = arg.clone().split_off(8);
+        if arg.starts_with("--name=") {
+            title = arg.clone().split_off(7);
         }
     }
 
@@ -81,10 +81,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     // println!("{:?}, \nmx: {}, my: {}", matrix, matrix.len(), matrix[0].len());
 
     // Create SVG circles of same size.
-    let file = File::create(format!("{title}.html")).expect("Check index.html if it exists.");
+    let file = File::create(format!("{title}.svg")).expect("Check index.html if it exists.");
     let mut file_buffer = BufWriter::new(file);
 
-    file_buffer.write(format!("<!DOCTYPE><html><head><title>{title}</title></head><svg height=\"{height}\" width=\"{width}\" xmlns=\"http://www.w3.org/2000/svg\">").as_bytes()).expect("file init write failed!");
+    file_buffer.write(format!("<svg height=\"{height}\" width=\"{width}\" xmlns=\"http://www.w3.org/2000/svg\">").as_bytes()).expect("file init write failed!");
 
     let r = grid_size.0 as f64 / 2.0;
     for y in 0..(h_g as usize) {
