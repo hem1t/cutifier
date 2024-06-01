@@ -1,0 +1,8 @@
+[package]
+name = "img_to_html"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+imghdr="0.7.0"
+image ="0.25.1"
