@@ -1,39 +1,43 @@
-use std::{env, error::Error, path::PathBuf, process::exit};
+use std::{error::Error, path::PathBuf, process::exit};
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use clap::Parser;
 use image::GenericImageView;
 
+#[derive(Parser)]
+#[command(version, about, long_about=None)]
+struct Cli {
+    /// The input image, that you want to rasterise.
+    #[arg(short, long, value_name="FILE")]
+    image: PathBuf,
+
+    /// Output Pixel size
+    #[arg(short, long)]
+    grid_size: Option<String>,
+
+    /// Name of output file.
+        #[arg(short, long)]
+    name: Option<String>,
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut image_path: Option<String> = None;
+    let options = Cli::parse();
+
+    let image_path = options.image.canonicalize()?;
+
     let mut grid_size: (u32, u32) = (12, 12);
-    let mut title: String = String::from("default");
-
-    for arg in env::args() {
-        dbg!(&arg);
-        if arg.starts_with("--image=") {
-            image_path = Some(arg.clone().split_off(8))
-        }
-        if arg.starts_with("--grid-size=") {
-            let grid_val = arg.clone().split_off(12);
-            let mut grid_val = grid_val.split('x');
-            grid_size =
-                (grid_val.next().unwrap().parse()?,
-                 grid_val.next().unwrap().parse()?);
-        }
-        if arg.starts_with("--name=") {
-            title = arg.clone().split_off(7);
-        }
+    if let Some(gs) = options.grid_size {
+        let mut gs = gs.split('x');
+        grid_size.0 = gs.next().unwrap().parse::<u32>()?;
+        grid_size.1 = gs.next().unwrap().parse::<u32>()?;
     }
 
-    dbg!(&image_path, &grid_size, &title);
-
-    if let None = image_path {
-        eprintln!("Please provide a file!");
-        exit(1);
+    let mut name = String::from("default");
+    if let Some(n) = options.name {
+        name = n;
     }
 
-    let image_path = PathBuf::from(image_path.unwrap()).canonicalize()?;
-    dbg!(&image_path);
+    dbg!(&image_path, &grid_size, &name);
 
     // check image type
     match imghdr::from_file(image_path.clone()) {
@@ -81,7 +85,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // println!("{:?}, \nmx: {}, my: {}", matrix, matrix.len(), matrix[0].len());
 
     // Create SVG circles of same size.
-    let file = File::create(format!("{title}.svg")).expect("Check index.html if it exists.");
+    let file = File::create(format!("{name}.svg")).expect("Check index.html if it exists.");
     let mut file_buffer = BufWriter::new(file);
 
     file_buffer.write(format!("<svg height=\"{height}\" width=\"{width}\" xmlns=\"http://www.w3.org/2000/svg\">").as_bytes()).expect("file init write failed!");
